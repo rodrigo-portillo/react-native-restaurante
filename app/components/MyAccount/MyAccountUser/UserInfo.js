@@ -190,7 +190,6 @@ export default class UserInfo extends Component {
       .then(async resolve => {
         let ref = firebase
           .storage()
-          .setMaxUploadRetryTime(120000)
           .ref()
           .child("avatar/" + nameImage);
         return await ref.put(resolve);
@@ -201,7 +200,7 @@ export default class UserInfo extends Component {
   };
 
   render() {
-    const { displayName, email, photoUrl } = this.state.userInfo;
+    const { displayName, email, photoURL } = this.state.userInfo;
     return (
       <View>
         <View style={styles.viewUserInfo}>
@@ -211,7 +210,7 @@ export default class UserInfo extends Component {
             showEditButton
             onEditPress={() => this.changeAvatarUser()}
             source={{
-              uri: this.checkUserAvatar(photoUrl)
+              uri: this.checkUserAvatar(photoURL)
             }}
             containerStyle={styles.userInfoAvatar}
           />

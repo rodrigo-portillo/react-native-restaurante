@@ -16,6 +16,8 @@ import LoginScreen from "../screens/MyAccount/Login";
 //Screen Restaurant
 import RestaurantsScreen from "../screens/Restaurant/Restaurant";
 import AddRestaurantScreen from "../screens/Restaurant/AddRestaurant";
+import RestauranScreen from "../screens/Restaurant/Restauran";
+import AddReviewRestaurant from "../screens/Restaurant/AddReviewRestaurant";
 
 const restaurantsScreenStack = createStackNavigator({
   Restaurant: {
@@ -28,6 +30,18 @@ const restaurantsScreenStack = createStackNavigator({
     screen: AddRestaurantScreen,
     navigationOptions: ({ navigation }) => ({
       title: "Nuevo Restaurante"
+    })
+  },
+  Restauran: {
+    screen: RestauranScreen,
+    navigationOptions: ({ navigation }) => ({
+      title: navigation.state.params.restaurant.item.restaurant.name
+    })
+  },
+  AddReviewRestaurant: {
+    screen: AddReviewRestaurant,
+    navigationOptions: ({ navigation }) => ({
+      title: navigation.state.params.name
     })
   }
 });

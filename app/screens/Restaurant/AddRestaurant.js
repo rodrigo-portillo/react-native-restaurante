@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { StyleSheet, View } from "react-native";
-import { Icon, Image, Button } from "react-native-elements";
+import { StyleSheet, View, ActivityIndicator } from "react-native";
+import { Icon, Image, Button, Text, Overlay } from "react-native-elements";
 import * as ImagePicker from "expo-image-picker";
 import * as Permissions from "expo-permissions";
 import Toast, { DURATION } from "react-native-easy-toast";
@@ -19,10 +19,11 @@ import "firebase/firestore";
 const db = fireBase.firestore(firebaseApp);
 
 export default class AddRestaurant extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
     this.state = {
+      loading: false,
       imageUriRestaurant: "",
       formData: {
         name: "",
@@ -85,21 +86,60 @@ export default class AddRestaurant extends Component {
     const { name, city, address, description } = this.state.formData;
 
     if (imageUriRestaurant && name && city && address && description) {
-      const data = {
-        name,
-        city,
-        address,
-        description,
-        image: ""
-      };
+      this.setState({ loading: true });
 
       db.collection("restaurants")
-        .add({ data })
+        .add({
+          name,
+          city,
+          address,
+          description,
+          image: "",
+          rating: 0,
+          ratingTotal: 0,
+          quantityVoting: 0,
+          createAt: new Date()
+        })
         .then(resolve => {
-          console.log("Restaurante añadido");
+          //          console.log("Restaurante añadido");
+          const restaurantId = resolve.id;
+          uploadImage(imageUriRestaurant, restaurantId, "restaurants")
+            .then(resolve => {
+              const restaurantRef = db
+                .collection("restaurants")
+                .doc(restaurantId);
+
+              restaurantRef
+                .update({ image: resolve })
+                .then(() => {
+                  this.setState({ loading: false });
+                  this.refs.toast.show(
+                    "Restaurante creado correctamente",
+                    100,
+                    () => {
+                      this.props.navigation.state.params.loadRestaurants();
+                      this.props.navigation.goBack();
+                    }
+                  );
+                })
+                .catch(err => {
+                  this.refs.toast.show(
+                    "Error de servidor, intentelo más tarde"
+                  );
+                  this.setState({ loading: false });
+                });
+            })
+            .catch(err => {
+              this.refs.toast.show(
+                "Error de servidor, intentelo más tarde",
+                1000
+              );
+              this.setState({ loading: false });
+            });
         })
         .catch(err => {
           this.refs.toast.show("Error de servidor, intentelo más tarde", 1000);
+          this.setState({ loading: false });
         });
     } else {
       this.refs.toast.show("Debes rellenar todos los campos", 1000);
@@ -107,7 +147,7 @@ export default class AddRestaurant extends Component {
   };
 
   render() {
-    const { imageUriRestaurant } = this.state;
+    const { imageUriRestaurant, loading } = this.state;
 
     return (
       <View style={styles.viewBody}>
@@ -139,6 +179,17 @@ export default class AddRestaurant extends Component {
             buttonStyle={styles.buttonAddRestaurant}
           />
         </View>
+        <Overlay
+          overlayStyle={styles.overlayLoading}
+          isVisible={loading}
+          width="auto"
+          height="auto"
+        >
+          <View>
+            <Text style={styles.overlayLoadingText}>Creando restaurante</Text>
+            <ActivityIndicator size="large" color="#00a680" />
+          </View>
+        </Overlay>
         <Toast
           ref="toast"
           position="bottom"
@@ -180,5 +231,13 @@ const styles = StyleSheet.create({
   buttonAddRestaurant: {
     backgroundColor: "#00a680",
     margin: 20
+  },
+  overlayLoading: {
+    padding: 20
+  },
+  overlayLoadingText: {
+    color: "#00a680",
+    marginBottom: 20,
+    fontSize: 20
   }
 });
